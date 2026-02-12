@@ -1,4 +1,4 @@
-# Seats Lecture code python script for University of Nottingham
+# Seatsomatic - Seats Lecture code python script for University of Nottingham
 
 This python script automatically opens a window with your seats lecture qr code 15 minutes before the start of the lecture. 
 
