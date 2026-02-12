@@ -50,7 +50,7 @@ def fetch_events(ical_url):
             if component.name == "VEVENT":
                 start = component.get('dtstart').dt
                 end = component.get('dtend').dt
-                if isinstance(start, datetime) and start > now:
+                if isinstance(start, datetime) and end > now:
                     summary = str(component.get('summary'))
                     description = str(component.get('description', ''))
                     location = str(component.get('location', ''))
@@ -318,7 +318,8 @@ def open_lecture_webview(event, module_override=None, location_override=None, ti
         f"Lecture: {event.summary}",
         LECTURE_URL,
         width=1200,
-        height=800
+        height=800,on_top=True
+        
     )
     lecture_window.expose(log_js)
     lecture_window.events.loaded += on_loaded
@@ -353,7 +354,7 @@ def main():
         except Exception as e:
             print(f"Error checking events: {e}")
         # Schedule next check on the main thread via JS
-        indow.evaluate_js("setTimeout(() => window.pywebview.api.check_events(), 1000);")
+        window.evaluate_js("setTimeout(() => window.pywebview.api.check_events(), 1000);")
 
     def log_div_not_found(label):
         print(f"Could not find '{label}' div. Retrying...")
@@ -370,12 +371,12 @@ def main():
         except Exception as e:
             print(f"Error opening event: {e}")
 
-    window = webview.create_window("Event List", html=html, width=600, height=800)
+    window = webview.create_window("Upcoming Teaching Sessions", html=html, width=600, height=800)
     window.expose(check_events)
     window.expose(log_div_not_found)
     window.expose(log_js)
     window.expose(open_event)
-    webview.start(func=check_events, debug=jsconsole)
+    webview.start(func=check_events, debug=jsconsole,private_mode=False)
 
 if __name__ == "__main__":
     try:
