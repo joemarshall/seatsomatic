@@ -1,1 +1,6 @@
 /testenv
+__pycache__/
+*.pyc
+
+# ignore my batch file which starts up with my URL
+start.bat
