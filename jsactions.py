@@ -5,28 +5,29 @@ class JSAction:
         (function(){{
                 {jscode}
         }})().then(window.pywebview.api.action_success).catch(window.pywebview.api.action_fail);"""
+        self._repr = f"{type(self).__name__}:{self.jscode[:60]}...)"
 
 
     def apply(self,window,callback,exceptionCallback):
-#        print(f"Applying JSAction {self} with code: \n")
-#        print(self.jscode)
         try:
             window.run_js(self.jscode)
-#            print("JSAction applied successfully:")
         except Exception as e:
             print(f"Error applying JSAction {self}: {e}")
             exceptionCallback(str(e))
+
+    def __str__(self):
+        return self._repr
 
 
 class JSWait(JSAction):
     def __init__(self,*,timeout):
         super().__init__(f"return new Promise(resolve => setTimeout(resolve, {timeout},true));")
+        self._repr = f"{type(self).__name__}: timeout={timeout}"
 
 
 
 class JSDoSomethingWithTimeout(JSAction):
     def __init__(self,js_todo,*,timeout):
-##        print("Timeout:",timeout)
         super().__init__(r"""
             function doIt(){
 try {
@@ -62,9 +63,10 @@ try {
 class JSActionBringToFront(JSDoSomethingWithTimeout):
     def __init__(self):
         super().__init__("return true",timeout=1000)
+        self._repr = f"{type(self).__name__}"
 
     def apply(self,window,callback,exceptionCallback):
-        window.on_top = True
+#        window.bring_to_front()
         print(f"Bringing window to front for JSAction {self}")
         super().apply(window,callback,exceptionCallback)
 
@@ -82,6 +84,7 @@ class JSDoLoginPages(JSDoSomethingWithTimeout):
             if()
             return false;
         """,timeout=5000)
+        self._repr = f"{type(self).__name__}: timeout=5000"
 
 class JSFailIfLoggedIn(JSDoSomethingWithTimeout):
     def __init__(self,base_url,target_url):
@@ -91,6 +94,7 @@ class JSFailIfLoggedIn(JSDoSomethingWithTimeout):
             if(window.location.href.startsWith(base_url)){{
                 return false;
             }}""",timeout=500)
+        self._repr = f"{type(self).__name__}: base_url='{base_url}', target_url='{target_url}', timeout=500"
 
 class JSNavigateToMainPage(JSDoSomethingWithTimeout):
     def __init__(self,base_url,target_url):
@@ -113,6 +117,7 @@ class JSNavigateToMainPage(JSDoSomethingWithTimeout):
                 return false;
             }
                             """,timeout=5000)
+        self._repr = f"{type(self).__name__}: base_url='{base_url}', target_url='{target_url}', timeout=5000"
 
 
 class JSDoSomethingToElementsWithTimeout(JSDoSomethingWithTimeout):
@@ -130,6 +135,7 @@ class JSDoSomethingToElementsWithTimeout(JSDoSomethingWithTimeout):
             }}
             return retval;
         """,timeout=timeout)
+        self._repr = f"{type(self).__name__}: element_selector='{element_selector}', timeout={timeout}, js_element_fn={js_element_fn[:60]}..."
 
 
 class JSClickByText(JSDoSomethingToElementsWithTimeout):
@@ -147,6 +153,7 @@ class JSClickByText(JSDoSomethingToElementsWithTimeout):
             }else{
                 return false;
             }""",element_selector=element_type,timeout=timeout)
+        self._repr = f"{type(self).__name__}: text='{text}', element_type='{element_type}', timeout={timeout}"
         
 class JSClickByMultiText(JSDoSomethingToElementsWithTimeout):
     def __init__(self,texts,click_selector,*,element_type="div",timeout=2000):
@@ -173,7 +180,7 @@ class JSClickByMultiText(JSDoSomethingToElementsWithTimeout):
             element.querySelector(click_selector).click();
             return true;
             """,element_selector=element_type,timeout=timeout)
-        
+        self._repr = f"{type(self).__name__}: texts={texts}, click_selector='{click_selector}', element_type='{element_type}', timeout={timeout}"
         
 
 class JSInputBySelector(JSDoSomethingToElementsWithTimeout):
@@ -188,10 +195,14 @@ class JSInputBySelector(JSDoSomethingToElementsWithTimeout):
             element.dispatchEvent(new InputEvent('input', { data: value, bubbles: true }))
             return true;
         """,element_selector=selector,timeout=timeout)
+        self._repr = f"{type(self).__name__}: selector='{selector}', value='{value}', timeout={timeout}"
         
 class JSClickBySelector(JSDoSomethingToElementsWithTimeout):
     def __init__(self,selector,timeout=2000):
         super().__init__("element.click();return true;",element_selector=selector,timeout=timeout)
+        self._repr = f"{type(self).__name__}: selector='{selector}', timeout={timeout}"
+        
+
 
 
 class JSHoldWhileVisibleXPath(JSDoSomethingWithTimeout):
@@ -209,6 +220,7 @@ class JSHoldWhileVisibleXPath(JSDoSomethingWithTimeout):
                 return true;
             }
         """,timeout=0)
+        self._repr = f"{type(self).__name__}: selector='{selector}', timeout=0"
 
 class JSHoldWhileVisible(JSDoSomethingWithTimeout):
     def __init__(self,selector,timeout=0):
@@ -225,3 +237,4 @@ class JSHoldWhileVisible(JSDoSomethingWithTimeout):
                 return true;
             }
         """,timeout=timeout)
+        self._repr = f"{type(self).__name__}: selector='{selector}', timeout={timeout}"

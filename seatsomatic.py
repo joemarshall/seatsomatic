@@ -133,6 +133,10 @@ def build_event_list_html(events):
 def get_actions_for_state(state, event):
     start_formatted = event.start.strftime("%d %B %Y")
     end_formatted = event.end.strftime("%d %B %Y")
+    if start_formatted.startswith("0"):
+        start_formatted = start_formatted[1:]
+    if end_formatted.startswith("0"):
+        end_formatted = end_formatted[1:]        
     ACTIONS_FOR_STATE = {
         EventActions.LOGIN_TO_SYSTEM: [
             JSFailIfLoggedIn(BASE_URL, LECTURE_URL),
@@ -302,7 +306,7 @@ def open_lecture_webview(
     OPEN_WINDOWS[event] = lecture_window
 
     def action_success(result):
-        nonlocal cur_state
+        nonlocal cur_state,this_action,current_actions
         print("Action success with result:", result)
         if result == True:
             action_done(result)
@@ -312,14 +316,19 @@ def open_lecture_webview(
                 action_done(True)
                 return
             print(f"Action {this_action} did not return True,Failed:", result)
+            if cur_state == EventActions.OPEN_QRCODE:
+                # if we can't open QR code, restart navigation from beginning
+                cur_state = EventActions.NAVIGATE_TO_PAGE
+                current_actions = get_actions_for_state(cur_state, event)
+                action_done(True)
             import sys
 
             sys.exit(-1)
 
     def action_fail(error):
+        nonlocal this_action
         print(f"Action {this_action} failed with error:", error)
         import sys
-
         sys.exit(-1)
 
     def close_window():
@@ -373,7 +382,7 @@ def main():
                 print(f"Opening lecture window for clicked event: {event}")
                 if event in OPEN_WINDOWS and OPEN_WINDOWS[event] is not None:
                     print("Window already open for this event.")
-                    OPEN_WINDOWS[event].bring_to_front()
+#                    OPEN_WINDOWS[event].bring_to_front()
                 else:
                     open_lecture_webview(event)
             else:
